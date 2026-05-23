@@ -33,11 +33,19 @@ export default function FeedPage() {
     try {
       // Use the published backend route that is available in the deployed API.
       // The current backend does not expose GET /api/articles or /api/recommendations/diversity.
-      const url = "/api/articles/trending";
+      const proxyUrl = "/api/articles/trending";
+      const directBackendUrl = "https://pivot-backend-442e.onrender.com/api/articles/trending";
 
-      const response = await fetch(url);
+      let response = await fetch(proxyUrl);
       if (!response.ok) {
-        throw new Error(`Primary feed request failed with status ${response.status}`);
+        const proxyBody = await response.text().catch(() => "");
+        console.warn("Proxy feed request failed:", response.status, proxyBody);
+        response = await fetch(directBackendUrl);
+      }
+
+      if (!response.ok) {
+        const backendBody = await response.text().catch(() => "");
+        throw new Error(`Primary feed request failed with status ${response.status}: ${backendBody}`);
       }
 
       const data = await response.json();
