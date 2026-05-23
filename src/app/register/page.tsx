@@ -45,16 +45,20 @@ export default function RegisterPage() {
     
     setLoading(true);
     try {
-      // 🚀 Make the live API call to your backend via the Next.js rewrite rule
-      const response = await fetch('/api/users', {
+      // 💡 Auto-generate a fallback username from email handle to satisfy Backend requirements
+      const generatedUsername = email.split("@")[0];
+
+      // 🚀 Pointing to the precise backend endpoint discovered in Swagger Docs
+      const response = await fetch('/api/users/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          username: generatedUsername, 
           email: email,
           password: password,
-          is_author: isAuthor // Matches snake_case backend schemas
+          is_author: isAuthor 
         }),
       });
 
@@ -65,8 +69,8 @@ export default function RegisterPage() {
 
       const newUserData = await response.json();
       
-      // Update your local auth state context with the returned data from the backend
-      register(newUserData.email, newUserData.is_author ?? isAuthor);
+      // Update local context tracking state
+      register(newUserData.email || email, isAuthor);
       
       toast.success("Account Created!", {
         description: `Registered successfully as ${email}. ${isAuthor ? "Author status activated." : ""}`,
