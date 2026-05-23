@@ -48,8 +48,8 @@ export default function RegisterPage() {
       // 💡 Auto-generate a fallback username from email handle to satisfy Backend requirements
       const generatedUsername = email.split("@")[0];
 
-      // 🚀 Pointing to the precise backend endpoint discovered in Swagger Docs
-      const response = await fetch('/api/users/register', {
+      // 🚀 Bypassing Next.js local proxies by routing directly to the fully-qualified Render API link
+      const response = await fetch('https://pivot-backend-442e.onrender.com/api/users/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
