@@ -31,46 +31,32 @@ export default function FeedPage() {
     const activeUserId = user ? user.user_id : 3;
 
     try {
-      // Build API request URL. 
-      // If diversity mode is selected, query the recommendations endpoint.
-      // Otherwise, query the standard articles list.
-      const url = mode === "diversity" 
-        ? `/api/recommendations/diversity?user_id=${activeUserId}`
-        : `/api/articles`;
+      // Use the published backend route that is available in the deployed API.
+      // The current backend does not expose GET /api/articles or /api/recommendations/diversity.
+      const url = "/api/articles/trending";
 
       const response = await fetch(url);
-      
-      if (response.ok) {
-        const data = await response.json();
-        setArticles(data);
+      if (!response.ok) {
+        throw new Error(`Primary feed request failed with status ${response.status}`);
+      }
+
+      const data = await response.json();
+      const standardData: Article[] = Array.isArray(data) ? data : [data];
+
+      if (mode === "diversity") {
+        const shuffled = clientSideDiversityRouting(standardData);
+        setArticles(shuffled);
+        toast.info("Showing Algorithmic Diversity Discovery Feed (Client Shuffle)", {
+          description: "Opposing viewpoints and diverse content have been balanced.",
+          duration: 4000,
+        });
       } else {
-        // If the diversity endpoint returns 404 or fails, fallback to standard feed
-        // but perform a client-side algorithmic diversity shuffle!
-        console.warn(`Feed endpoint returned status ${response.status}. Attempting standard endpoint fallback...`);
-        const fallbackResponse = await fetch("/api/articles");
-        if (fallbackResponse.ok) {
-          const standardData: Article[] = await fallbackResponse.json();
-          
-          if (mode === "diversity") {
-            // Apply Track B Contrarian Diversity Routing Shuffle
-            // This balances tags and forces opposing viewpoints to bubble up!
-            const shuffled = clientSideDiversityRouting(standardData);
-            setArticles(shuffled);
-            toast.info("Showing Algorithmic Diversity Discovery Feed (Client Shuffle)", {
-              description: "Opposing viewpoints and diverse content have been balanced.",
-              duration: 4000,
-            });
-          } else {
-            setArticles(standardData);
-          }
-        } else {
-          throw new Error("Failed fetching both primary and fallback feeds");
-        }
+        setArticles(standardData);
       }
     } catch (err) {
       console.error("Error connecting network to platform api endpoints:", err);
       toast.error("Connectivity Bottleneck Detected", {
-        description: "Unable to retrieve real-time article seed. Check backend CORS and connectivity.",
+        description: "Unable to retrieve real-time article seed. Check backend route availability and connectivity.",
       });
       // Set some beautiful high-quality fallback mock data so the app NEVER feels broken!
       setArticles(getMockArticles());
