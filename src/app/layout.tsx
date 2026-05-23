@@ -26,7 +26,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="h-full scroll-smooth">
+    <html lang="en" className="h-full scroll-smooth" data-scroll-behavior="smooth">
       <body className={`${geistSans.variable} ${geistMono.variable} h-full antialiased font-sans bg-background text-foreground flex flex-col`}>
         <AuthProvider>
           <div className="flex flex-col min-h-screen">
