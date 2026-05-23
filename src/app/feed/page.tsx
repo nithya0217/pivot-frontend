@@ -41,7 +41,15 @@ export default function FeedPage() {
       }
 
       const data = await response.json();
-      const standardData: Article[] = Array.isArray(data) ? data : [data];
+      const rawArticles = Array.isArray(data) ? data : [data];
+      const standardData: Article[] = rawArticles.map((article: any) => ({
+        article_id: article.article_id ?? article.id ?? 0,
+        title: article.title ?? "",
+        slug: article.slug ?? "",
+        content: article.content ?? "",
+        author_name: article.author?.username ?? article.author_name ?? "Anonymous User",
+        tags: article.tags ?? ["General"],
+      }));
 
       if (mode === "diversity") {
         const shuffled = clientSideDiversityRouting(standardData);
