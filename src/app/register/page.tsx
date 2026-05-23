@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { KeyRound, Mail, ArrowRight, UserPlus, ShieldAlert } from "lucide-react";
+import { KeyRound, Mail, UserPlus } from "lucide-react";
 
 export default function RegisterPage() {
   const { register } = useAuth();
@@ -45,18 +45,38 @@ export default function RegisterPage() {
     
     setLoading(true);
     try {
-      // Simulate API latency
-      await new Promise(resolve => setTimeout(resolve, 800));
+      // 🚀 Make the live API call to your backend via the Next.js rewrite rule
+      const response = await fetch('/api/users', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: email,
+          password: password,
+          is_author: isAuthor // Matches snake_case backend schemas
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || "Registration failed on server");
+      }
+
+      const newUserData = await response.json();
       
-      register(email, isAuthor);
+      // Update your local auth state context with the returned data from the backend
+      register(newUserData.email, newUserData.is_author ?? isAuthor);
       
       toast.success("Account Created!", {
         description: `Registered successfully as ${email}. ${isAuthor ? "Author status activated." : ""}`,
       });
+      
       router.push("/feed");
-    } catch (err) {
+    } catch (err: any) {
+      console.error("Network registration error:", err);
       toast.error("Registration Failed", {
-        description: "An error occurred while creating your account. Try again.",
+        description: err.message || "An error occurred while creating your account. Try again.",
       });
     } finally {
       setLoading(false);
@@ -130,7 +150,7 @@ export default function RegisterPage() {
                 )}
               </div>
 
-              {/* Author Toggle Checkbox (Track B Schema Constraint) */}
+              {/* Author Toggle Checkbox */}
               <div className="flex items-start space-x-3 p-3 bg-violet-50/50 dark:bg-violet-950/10 border border-violet-100 dark:border-violet-900/40 rounded-xl mt-2 transition-all duration-200">
                 <input
                   id="isAuthor"
