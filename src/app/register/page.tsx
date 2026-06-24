@@ -22,8 +22,6 @@ export default function RegisterPage() {
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [loading, setLoading] = useState(false);
 
-  const backendBaseUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000";
-
   const validate = () => {
     const newErrors: { [key: string]: string } = {};
     if (!username) {
@@ -56,8 +54,8 @@ export default function RegisterPage() {
       // 💡 Auto-generate a fallback username from email handle to satisfy Backend requirements
       const generatedUsername = username || email.split("@")[0];
 
-      // 🚀 Use configurable backend base URL so devs can override with NEXT_PUBLIC_API_URL.
-      const response = await fetch(`${backendBaseUrl}/api/users/register`, {
+      // 🚀 Use the app proxy route so Vercel rewrites to the configured backend.
+      const response = await fetch('/api/users/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -85,10 +83,11 @@ export default function RegisterPage() {
       });
       
       router.push("/feed");
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Network registration error:", err);
+      const message = err instanceof Error ? err.message : "An error occurred while creating your account. Try again.";
       toast.error("Registration Failed", {
-        description: err.message || "An error occurred while creating your account. Try again.",
+        description: message,
       });
     } finally {
       setLoading(false);
