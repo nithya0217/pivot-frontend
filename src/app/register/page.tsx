@@ -22,7 +22,7 @@ export default function RegisterPage() {
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [loading, setLoading] = useState(false);
 
-  const backendBaseUrl = process.env.NEXT_PUBLIC_API_URL ?? "https://pivot-backend-442e.onrender.com";
+  const backendBaseUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000";
 
   const validate = () => {
     const newErrors: { [key: string]: string } = {};

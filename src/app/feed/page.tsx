@@ -26,15 +26,15 @@ export default function FeedPage() {
 
   const tagsList = ["All", "Technology", "Philosophy", "Politics-Left", "Politics-Right", "Economy", "General"];
 
+  const backendBaseUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000";
+
   const loadFeed = async (mode: "standard" | "diversity") => {
     setLoading(true);
     const activeUserId = user ? user.user_id : 3;
 
     try {
-      // Use the published backend route that is available in the deployed API.
-      // The current backend does not expose GET /api/articles or /api/recommendations/diversity.
       const proxyUrl = "/api/articles/trending";
-      const directBackendUrl = "https://pivot-backend-442e.onrender.com/api/articles/trending";
+      const directBackendUrl = `${backendBaseUrl}/api/articles/trending`;
 
       let response = await fetch(proxyUrl);
       if (!response.ok) {
