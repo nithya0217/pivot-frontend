@@ -15,14 +15,22 @@ export default function RegisterPage() {
   const { register } = useAuth();
   const router = useRouter();
   
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isAuthor, setIsAuthor] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [loading, setLoading] = useState(false);
 
+  const backendBaseUrl = process.env.NEXT_PUBLIC_API_URL ?? "https://pivot-backend-442e.onrender.com";
+
   const validate = () => {
     const newErrors: { [key: string]: string } = {};
+    if (!username) {
+      newErrors.username = "Username is required";
+    } else if (username.length < 3) {
+      newErrors.username = "Username must be at least 3 characters";
+    }
     if (!email) {
       newErrors.email = "Email is required";
     } else if (!/\S+@\S+\.\S+/.test(email)) {
@@ -46,19 +54,19 @@ export default function RegisterPage() {
     setLoading(true);
     try {
       // 💡 Auto-generate a fallback username from email handle to satisfy Backend requirements
-      const generatedUsername = email.split("@")[0];
+      const generatedUsername = username || email.split("@")[0];
 
-      // 🚀 Bypassing Next.js local proxies by routing directly to the fully-qualified Render API link
-      const response = await fetch('https://pivot-backend-442e.onrender.com/api/users/register', {
+      // 🚀 Use configurable backend base URL so devs can override with NEXT_PUBLIC_API_URL.
+      const response = await fetch(`${backendBaseUrl}/api/users/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          username: generatedUsername, 
+          username: generatedUsername,
           email: email,
           password: password,
-          is_author: isAuthor 
+          is_author: isAuthor
         }),
       });
 
@@ -108,6 +116,29 @@ export default function RegisterPage() {
           <form onSubmit={handleSubmit}>
             <CardContent className="space-y-4 px-8 pb-6">
               
+              {/* Username Input */}
+              <div className="space-y-1.5">
+                <Label htmlFor="username" className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Username
+                </Label>
+                <div className="relative group">
+                  <UserPlus className="absolute left-3 top-3 h-4 w-4 text-muted-foreground group-focus-within:text-violet-500 transition-colors" />
+                  <Input
+                    id="username"
+                    type="text"
+                    placeholder="your username"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    className={`pl-10 h-11 bg-background/50 border-border/80 focus-visible:ring-violet-500 focus-visible:border-violet-500 ${
+                      errors.username ? "border-red-500 focus-visible:ring-red-500" : ""
+                    }`}
+                  />
+                </div>
+                {errors.username && (
+                  <p className="text-xs text-red-500 font-medium pl-1 mt-1">{errors.username}</p>
+                )}
+              </div>
+
               {/* Email Input */}
               <div className="space-y-1.5">
                 <Label htmlFor="email" className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
