@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Pivot Digital Publishing Platform",
-  description: "Track B: Diversity Discovery and Contrarian Routing Engine",
+  description: " Diversity Discovery and Contrarian Routing Engine",
 };
 
 export default function RootLayout({

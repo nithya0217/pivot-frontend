@@ -51,12 +51,55 @@ const mockArticles: Article[] = [
   },
 ];
 
-export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
-  const article = mockArticles.find((item) => item.slug === params.slug);
+type Params = { slug: string } | Promise<{ slug: string }>;
+
+interface FetchedArticle {
+  article_id?: number;
+  id?: number;
+  title?: string;
+  slug?: string;
+  content?: string;
+  author?: { username?: string };
+  author_name?: string;
+  author_username?: string;
+  tags?: string[];
+}
+
+async function fetchArticleBySlug(slug: string): Promise<Article | null> {
+  try {
+    // Try proxy first
+    const proxyRes = await fetch(`/api/articles/trending`);
+    if (proxyRes.ok) {
+      const data = await proxyRes.json();
+      const arr = Array.isArray(data) ? (data as FetchedArticle[]) : ([data] as FetchedArticle[]);
+      const found = arr.find((a: FetchedArticle) => a.slug === slug);
+      if (found) {
+        return {
+          article_id: found.article_id ?? found.id ?? 0,
+          title: found.title ?? "",
+          slug: found.slug ?? "",
+          content: found.content ?? "",
+          author_name: found.author?.username ?? found.author_name ?? found.author_username ?? "Anonymous",
+          tags: found.tags ?? ["General"],
+        };
+      }
+    }
+  } catch (err) {
+    // keep a debug log in development to help diagnose proxy/backend issues
+    // eslint-disable-next-line no-console
+    console.debug("fetchArticleBySlug error:", err);
+  }
+
+  // Fallback: search local mock articles
+  const local = mockArticles.find((item) => item.slug === (slug ?? ""));
+  return local ?? null;
+}
+
+export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
+  const { slug } = await params;
+  const article = await fetchArticleBySlug(slug);
   if (!article) {
-    return {
-      title: "Article Not Found",
-    };
+    return { title: "Article Not Found" };
   }
 
   return {
@@ -65,8 +108,9 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   };
 }
 
-export default function ArticleDetailPage({ params }: { params: { slug: string } }) {
-  const article = mockArticles.find((item) => item.slug === params.slug);
+export default async function ArticleDetailPage({ params }: { params: Params }) {
+  const { slug } = await params;
+  const article = await fetchArticleBySlug(slug);
 
   if (!article) {
     notFound();
