@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -16,9 +17,10 @@ interface ArticleProps {
   tags: string[];
 }
 
-export default function ArticleCard({ id, title, content, author, tags }: ArticleProps) {
+export default function ArticleCard({ id, title, content, author, tags, slug }: ArticleProps) {
   const { user } = useAuth();
   const [isSending, setIsSending] = useState(false);
+  const articleUrl = `/feed/${slug}`;
 
   // Track B: Silent event delivery pipeline monitoring algorithmic behavior
   const handleInteraction = async () => {
@@ -81,20 +83,23 @@ export default function ArticleCard({ id, title, content, author, tags }: Articl
         </p>
       </CardContent>
 
-      <CardFooter className="border-t border-border/50 pt-4 mt-auto text-xs text-muted-foreground flex items-center justify-between bg-muted/20 px-6 py-3">
+      <CardFooter className="border-t border-border/50 pt-4 mt-auto text-xs text-muted-foreground bg-muted/20 px-6 py-3 space-y-3">
         <div className="flex items-center gap-1">
           <User className="h-3.5 w-3.5 text-violet-500" />
           By <span className="font-semibold text-foreground ml-1">{author}</span>
         </div>
         
-        <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between gap-3">
           <span className="flex items-center gap-1 text-[10px]">
             <Clock className="h-3 w-3" /> 2m read
           </span>
-          {isSending && (
-            <span className="inline-flex h-2 w-2 rounded-full bg-violet-600 animate-ping" title="Registering telemetry" />
-          )}
+          <Link href={articleUrl} className="text-sm font-semibold text-violet-600 hover:text-violet-700">
+            Read full article →
+          </Link>
         </div>
+        {isSending && (
+          <span className="inline-flex h-2 w-2 rounded-full bg-violet-600 animate-ping" title="Registering telemetry" />
+        )}
       </CardFooter>
     </Card>
   );
