@@ -35,7 +35,7 @@ export default function LandingPage() {
 
         {/* Subtitle */}
         <p className="text-lg md:text-xl text-muted-foreground font-light max-w-3xl leading-relaxed mb-10">
-          Introducing <strong>Pivot</strong>: a publishing space operating on <strong>Track B (Diversity Routing)</strong>. 
+          Introducing <strong>Pivot</strong>: a publishing space operating on <strong>Diversity Routing</strong>. 
           By deploying contrarian routing maps, we intelligently balance opinion clusters, offering readers alternative view angles silently backed by real-time interaction telemetry.
         </p>
 
