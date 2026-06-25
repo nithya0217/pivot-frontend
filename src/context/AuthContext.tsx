@@ -33,7 +33,15 @@ function getStoredUser(): User | null {
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(getStoredUser);
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    // Load stored user only on the client after mount.
+    // This avoids SSR/client hydration mismatch because localStorage is
+    // not available during server rendering.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setUser(getStoredUser());
+  }, []);
 
   const login = (email: string, isAuthor = false) => {
     // Generate a deterministic user id from the login email when backend is unavailable.

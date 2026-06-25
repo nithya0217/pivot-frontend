@@ -11,6 +11,7 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  allowedDevOrigins: ['192.168.56.1'],
   env: {
     NEXT_PUBLIC_API_URL: backendOrigin,
   },
