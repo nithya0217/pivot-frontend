@@ -65,24 +65,30 @@ interface FetchedArticle {
   tags?: string[];
 }
 
+const backendBaseUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000";
+
 async function fetchArticleBySlug(slug: string): Promise<Article | null> {
   try {
-    // Try proxy first
-    const proxyRes = await fetch(`/api/articles/trending`);
-    if (proxyRes.ok) {
-      const data = await proxyRes.json();
-      const arr = Array.isArray(data) ? (data as FetchedArticle[]) : ([data] as FetchedArticle[]);
-      const found = arr.find((a: FetchedArticle) => a.slug === slug);
-      if (found) {
-        return {
-          article_id: found.article_id ?? found.id ?? 0,
-          title: found.title ?? "",
-          slug: found.slug ?? "",
-          content: found.content ?? "",
-          author_name: found.author?.username ?? found.author_name ?? found.author_username ?? "Anonymous",
-          tags: found.tags ?? ["General"],
-        };
-      }
+    const proxyUrl = `/api/articles/${slug}`;
+    const directBackendUrl = `${backendBaseUrl}/api/articles/${slug}`;
+
+    let response = await fetch(proxyUrl);
+    if (!response.ok) {
+      const proxyBody = await response.text().catch(() => "");
+      console.warn("Article proxy request failed:", response.status, proxyBody);
+      response = await fetch(directBackendUrl);
+    }
+
+    if (response.ok) {
+      const found = (await response.json()) as FetchedArticle;
+      return {
+        article_id: found.article_id ?? found.id ?? 0,
+        title: found.title ?? "",
+        slug: found.slug ?? "",
+        content: found.content ?? "",
+        author_name: found.author?.username ?? found.author_name ?? found.author_username ?? "Anonymous",
+        tags: found.tags ?? ["General"],
+      };
     }
   } catch (err) {
     // keep a debug log in development to help diagnose proxy/backend issues
