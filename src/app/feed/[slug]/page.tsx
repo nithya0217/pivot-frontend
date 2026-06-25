@@ -86,7 +86,6 @@ async function fetchArticleBySlug(slug: string): Promise<Article | null> {
     }
   } catch (err) {
     // keep a debug log in development to help diagnose proxy/backend issues
-    // eslint-disable-next-line no-console
     console.debug("fetchArticleBySlug error:", err);
   }
 
