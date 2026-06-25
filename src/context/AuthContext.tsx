@@ -18,38 +18,30 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+function getStoredUser(): User | null {
+  if (typeof window === "undefined") return null;
 
-  // Load from localStorage on mount
-  useEffect(() => {
-    const storedUser = localStorage.getItem("pivot_user");
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch (e) {
-        console.error("Failed to parse stored user", e);
-      }
-    } else {
-      // Default mock user matching seed database (user_id: 3, seeded reader)
-      const defaultMockUser: User = {
-        user_id: 3,
-        email: "mock.reader@pivot.com",
-        is_author: false,
-      };
-      setUser(defaultMockUser);
-      localStorage.setItem("pivot_user", JSON.stringify(defaultMockUser));
-    }
-  }, []);
+  const storedUser = localStorage.getItem("pivot_user");
+  if (!storedUser) return null;
+
+  try {
+    return JSON.parse(storedUser);
+  } catch (e) {
+    console.error("Failed to parse stored user", e);
+    return null;
+  }
+}
+
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [user, setUser] = useState<User | null>(getStoredUser);
 
   const login = (email: string, isAuthor = false) => {
-    // Check if it matches seed author or create a simple mock id
-    let userId = 3; // default mock reader
-    if (email.toLowerCase().includes("author")) {
-      userId = 2; // default mock author
-      isAuthor = true;
-    }
-    
+    // Generate a deterministic user id from the login email when backend is unavailable.
+    const hashedId = Math.abs(
+      Array.from(email.toLowerCase()).reduce((hash, char) => hash * 31 + char.charCodeAt(0), 0)
+    );
+    const userId = isAuthor ? 2 : (hashedId % 1000000) + 100;
+
     const newUser: User = {
       user_id: userId,
       email,
