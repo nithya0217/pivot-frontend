@@ -29,9 +29,7 @@ export default function TopNavbar() {
             <span className="font-extrabold text-2xl tracking-tighter bg-gradient-to-r from-violet-600 to-indigo-500 bg-clip-text text-transparent group-hover:from-indigo-500 group-hover:to-violet-600 transition-all duration-300">
               PIVOT
             </span>
-            <Badge variant="outline" className="text-[10px] uppercase font-bold tracking-widest text-violet-600 border-violet-500/30 bg-violet-50 dark:bg-violet-950/20 px-1.5 py-0">
-              Track B
-            </Badge>
+            
           </Link>
           
           <Link 
