@@ -1,12 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import ArticleCard from "@/components/feed/ArticleCard";
-import { useAuth } from "@/context/AuthContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Sparkles, SlidersHorizontal, ArrowUpDown, Shuffle } from "lucide-react";
+import { Sparkles, SlidersHorizontal, Shuffle } from "lucide-react";
 
 interface Article {
   article_id: number;
@@ -17,20 +16,98 @@ interface Article {
   tags?: string[];
 }
 
+type FeedMode = "standard" | "diversity";
+
+interface FetchedArticle {
+  article_id?: number;
+  id?: number;
+  title?: string;
+  slug?: string;
+  content?: string;
+  author_name?: string;
+  author_username?: string;
+  author?: {
+    username?: string;
+  };
+  tags?: string[];
+}
+
+const backendBaseUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000";
+
+const clientSideDiversityRouting = (data: Article[]): Article[] => {
+  if (data.length <= 1) return data;
+
+  const groups: Record<string, Article[]> = {};
+  data.forEach(article => {
+    const tag = article.tags && article.tags[0] ? article.tags[0] : "General";
+    if (!groups[tag]) groups[tag] = [];
+    groups[tag].push(article);
+  });
+
+  const diverseList: Article[] = [];
+  const keys = Object.keys(groups);
+  let hasMore = true;
+  let index = 0;
+
+  while (hasMore) {
+    hasMore = false;
+    keys.forEach(tag => {
+      if (groups[tag][index]) {
+        diverseList.push(groups[tag][index]);
+        hasMore = true;
+      }
+    });
+    index++;
+  }
+
+  return diverseList;
+};
+
+const getMockArticles = (): Article[] => [
+  {
+    article_id: 101,
+    title: "The Silent Rise of Decentralized AI Agents",
+    slug: "silent-rise-decentralized-ai",
+    content: "As artificial intelligence scales, a pivotal debate emerges around centralized corporate clusters vs. public-domain edge weights. In this deep dive, we explore how running localized models at home creates digital hubs that resist singular data silos.",
+    author_name: "Eleanor Vance",
+    tags: ["Technology", "Philosophy"]
+  },
+  {
+    article_id: 102,
+    title: "Why Economic Equilibrium Requires Constant Chaos",
+    slug: "economic-equilibrium-chaos",
+    content: "Modern monetary frameworks strive for predictive stability, yet historically, progress occurs at the edge of systemic friction. By examining historical boom-bust metrics, we analyze whether controlled volatility is healthy.",
+    author_name: "Prof. Marcus Thorne",
+    tags: ["Economy", "Philosophy"]
+  },
+  {
+    article_id: 103,
+    title: "Restructuring Local Governance through Algorithmic Participation",
+    slug: "restructuring-local-governance",
+    content: "Direct representation has hit bottlenecks in scaling metropolitan grids. We evaluate custom voting protocols that dynamically weigh citizen engagement points according to actual domain contributions.",
+    author_name: "Aria Sterling",
+    tags: ["Politics-Left", "Technology"]
+  },
+  {
+    article_id: 104,
+    title: "The Case for Traditional Monetary Anchors in a Digital Era",
+    slug: "traditional-monetary-anchors",
+    content: "While decentralization offers theoretical liberty, physical currency backings provide historical anti-fragility. This comparative report explores gold and land reserves as stable points of trust in highly liquid financial systems.",
+    author_name: "Julian Vance",
+    tags: ["Politics-Right", "Economy"]
+  }
+];
+
 export default function FeedPage() {
-  const { user } = useAuth();
   const [articles, setArticles] = useState<Article[]>([]);
-  const [feedMode, setFeedMode] = useState<"standard" | "diversity">("standard");
+  const [feedMode, setFeedMode] = useState<FeedMode>("standard");
   const [loading, setLoading] = useState(true);
   const [selectedTag, setSelectedTag] = useState<string>("All");
 
   const tagsList = ["All", "Technology", "Philosophy", "Politics-Left", "Politics-Right", "Economy", "General"];
 
-  const backendBaseUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000";
-
-  const loadFeed = async (mode: "standard" | "diversity") => {
+  const loadFeed = useCallback(async (mode: FeedMode) => {
     setLoading(true);
-    const activeUserId = user ? user.user_id : 3;
 
     try {
       const proxyUrl = "/api/articles/trending";
@@ -49,13 +126,13 @@ export default function FeedPage() {
       }
 
       const data = await response.json();
-      const rawArticles = Array.isArray(data) ? data : [data];
-      const standardData: Article[] = rawArticles.map((article: any) => ({
+      const rawArticles = Array.isArray(data) ? (data as FetchedArticle[]) : [data as FetchedArticle];
+      const standardData: Article[] = rawArticles.map((article) => ({
         article_id: article.article_id ?? article.id ?? 0,
         title: article.title ?? "",
         slug: article.slug ?? "",
         content: article.content ?? "",
-        author_name: article.author?.username ?? article.author_name ?? "Anonymous User",
+        author_name: article.author?.username ?? article.author_name ?? article.author_username ?? "Anonymous User",
         tags: article.tags ?? ["General"],
       }));
 
@@ -79,79 +156,15 @@ export default function FeedPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    loadFeed(feedMode);
-  }, [feedMode, user]);
+    const fetchFeed = async () => {
+      await loadFeed(feedMode);
+    };
 
-  // Track B Contrarian Tag balancing algorithm
-  const clientSideDiversityRouting = (data: Article[]): Article[] => {
-    if (data.length <= 1) return data;
-    
-    // Group by primary tag
-    const groups: { [key: string]: Article[] } = {};
-    data.forEach(article => {
-      const tag = article.tags && article.tags[0] ? article.tags[0] : "General";
-      if (!groups[tag]) groups[tag] = [];
-      groups[tag].push(article);
-    });
-
-    const diverseList: Article[] = [];
-    const keys = Object.keys(groups);
-    let hasMore = true;
-    let index = 0;
-
-    // Pull round-robin from each category group to maximize viewpoint contrast
-    while (hasMore) {
-      hasMore = false;
-      keys.forEach(tag => {
-        if (groups[tag][index]) {
-          diverseList.push(groups[tag][index]);
-          hasMore = true;
-        }
-      });
-      index++;
-    }
-
-    return diverseList;
-  };
-
-  // Beautiful placeholder seed articles so the page is always visually gorgeous
-  const getMockArticles = (): Article[] => [
-    {
-      article_id: 101,
-      title: "The Silent Rise of Decentralized AI Agents",
-      slug: "silent-rise-decentralized-ai",
-      content: "As artificial intelligence scales, a pivotal debate emerges around centralized corporate clusters vs. public-domain edge weights. In this deep dive, we explore how running localized models at home creates digital hubs that resist singular data silos.",
-      author_name: "Eleanor Vance",
-      tags: ["Technology", "Philosophy"]
-    },
-    {
-      article_id: 102,
-      title: "Why Economic Equilibrium Requires Constant Chaos",
-      slug: "economic-equilibrium-chaos",
-      content: "Modern monetary frameworks strive for predictive stability, yet historically, progress occurs at the edge of systemic friction. By examining historical boom-bust metrics, we analyze whether controlled volatility is healthy.",
-      author_name: "Prof. Marcus Thorne",
-      tags: ["Economy", "Philosophy"]
-    },
-    {
-      article_id: 103,
-      title: "Restructuring Local Governance through Algorithmic Participation",
-      slug: "restructuring-local-governance",
-      content: "Direct representation has hit bottlenecks in scaling metropolitan grids. We evaluate custom voting protocols that dynamically weigh citizen engagement points according to actual domain contributions.",
-      author_name: "Aria Sterling",
-      tags: ["Politics-Left", "Technology"]
-    },
-    {
-      article_id: 104,
-      title: "The Case for Traditional Monetary Anchors in a Digital Era",
-      slug: "traditional-monetary-anchors",
-      content: "While decentralization offers theoretical liberty, physical currency backings provide historical anti-fragility. This comparative report explores gold and land reserves as stable points of trust in highly liquid financial systems.",
-      author_name: "Julian Vance",
-      tags: ["Politics-Right", "Economy"]
-    }
-  ];
+    fetchFeed();
+  }, [feedMode, loadFeed]);
 
   // Filtering articles based on user-selected tags
   const filteredArticles = selectedTag === "All" 

@@ -75,8 +75,8 @@ export default function RegisterPage() {
 
       const newUserData = await response.json();
       
-      // Update local context tracking state
-      register(newUserData.email || email, isAuthor);
+      // Update local context tracking state with server-assigned user id
+      register(newUserData.user_id, newUserData.email || email, newUserData.is_author ?? isAuthor);
       
       toast.success("Account Created!", {
         description: `Registered successfully as ${email}. ${isAuthor ? "Author status activated." : ""}`,

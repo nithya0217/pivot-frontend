@@ -11,7 +11,7 @@ interface User {
 interface AuthContextType {
   user: User | null;
   login: (email: string, isAuthor?: boolean) => void;
-  register: (email: string, isAuthor: boolean) => void;
+  register: (user_id: number, email: string, isAuthor: boolean) => void;
   logout: () => void;
   setAuthorStatus: (status: boolean) => void;
 }
@@ -59,11 +59,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem("pivot_user", JSON.stringify(newUser));
   };
 
-  const register = (email: string, isAuthor: boolean) => {
-    // Generate a mock user ID for registration
-    const mockId = Math.floor(Math.random() * 1000) + 10;
+  const register = (user_id: number, email: string, isAuthor: boolean) => {
     const newUser: User = {
-      user_id: mockId,
+      user_id,
       email,
       is_author: isAuthor,
     };
