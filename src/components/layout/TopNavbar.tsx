@@ -38,6 +38,18 @@ export default function TopNavbar() {
           >
             Discover Feed
           </Link>
+          <Link 
+            href="/bookmarks" 
+            className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors duration-200"
+          >
+            Bookmarks
+          </Link>
+          <Link 
+            href="/likes" 
+            className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors duration-200"
+          >
+            Likes
+          </Link>
         </div>
 
         {/* User Auth Interactions */}
@@ -92,6 +104,16 @@ export default function TopNavbar() {
                   <DropdownMenuItem>
                     <Link href="/feed" className="w-full cursor-pointer font-medium text-sm">
                       Platform Feed
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Link href="/bookmarks" className="w-full cursor-pointer font-medium text-sm">
+                      Bookmarks
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Link href="/likes" className="w-full cursor-pointer font-medium text-sm">
+                      Liked Articles
                     </Link>
                   </DropdownMenuItem>
                   {user.is_author && (
